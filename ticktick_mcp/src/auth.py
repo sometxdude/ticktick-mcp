@@ -23,10 +23,6 @@ import logging
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# TickTick OAuth endpoints
-AUTH_URL = "https://ticktick.com/oauth/authorize"
-TOKEN_URL = "https://ticktick.com/oauth/token"
-
 # Default scopes for TickTick API
 DEFAULT_SCOPES = ["tasks:read", "tasks:write"]
 
@@ -155,6 +151,8 @@ class TickTickAuth:
         else:
             load_dotenv()
         
+        self.auth_url = os.getenv("TICKTICK_AUTH_URL") or "https://ticktick.com/oauth/authorize"
+        self.token_url = os.getenv("TICKTICK_TOKEN_URL") or "https://ticktick.com/oauth/token"
         self.client_id = client_id or os.getenv("TICKTICK_CLIENT_ID")
         self.client_secret = client_secret or os.getenv("TICKTICK_CLIENT_SECRET")
         self.redirect_uri = redirect_uri
@@ -194,7 +192,7 @@ class TickTickAuth:
         
         # Build the URL with query parameters
         query_string = urllib.parse.urlencode(params)
-        return f"{AUTH_URL}?{query_string}"
+        return f"{self.auth_url}?{query_string}"
     
     def start_auth_flow(self, scopes: list = None) -> str:
         """
@@ -284,12 +282,14 @@ class TickTickAuth:
         
         headers = {
             "Authorization": f"Basic {auth_b64}",
-            "Content-Type": "application/x-www-form-urlencoded"
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept-Encoding": None,
+            "User-Agent": 'curl/8.7.1'
         }
         
         try:
             # Send the token request
-            response = requests.post(TOKEN_URL, data=token_data, headers=headers)
+            response = requests.post(self.token_url, data=token_data, headers=headers)
             response.raise_for_status()
             
             # Parse the response
