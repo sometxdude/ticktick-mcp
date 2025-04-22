@@ -85,6 +85,8 @@ The server handles token refresh automatically, so you won't need to reauthentic
 
 ## Authentication with Dida365
 
+[滴答清单 - Dida365](https://dida365.com/home) is China version of TickTick, and the authentication process is similar to TickTick. Follow these steps to set up Dida365 authentication:
+
 1. Register your application at the [Dida365 Developer Center](https://developer.dida365.com/manage)
    - Set the redirect URI to `http://localhost:8000/callback`
    - Note your Client ID and Client Secret
