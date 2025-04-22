@@ -23,7 +23,7 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server for Ti
 
 1. **Clone this repository**:
    ```bash
-   git clone https://github.com/parkjs814/ticktick-mcp.git
+   git clone https://github.com/jacepark12/ticktick-mcp.git
    cd ticktick-mcp
    ```
 
