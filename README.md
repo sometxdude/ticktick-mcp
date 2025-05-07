@@ -83,6 +83,23 @@ This server uses OAuth2 to authenticate with TickTick. The setup process is stra
 
 The server handles token refresh automatically, so you won't need to reauthenticate unless you revoke access or delete your `.env` file.
 
+## Authentication with Dida365
+
+[滴答清单 - Dida365](https://dida365.com/home) is China version of TickTick, and the authentication process is similar to TickTick. Follow these steps to set up Dida365 authentication:
+
+1. Register your application at the [Dida365 Developer Center](https://developer.dida365.com/manage)
+   - Set the redirect URI to `http://localhost:8000/callback`
+   - Note your Client ID and Client Secret
+
+2. Add environment variables to your `.env` file:
+   ```env
+   TICKTICK_BASE_URL='https://api.dida365.com/open/v1'
+   TICKTICK_AUTH_URL='https://dida365.com/oauth/authorize'
+   TICKTICK_TOKEN_URL='https://dida365.com/oauth/token'
+   ```
+
+3. Follow the same authentication steps as for TickTick
+
 ## Usage with Claude for Desktop
 
 1. Install [Claude for Desktop](https://claude.ai/download)

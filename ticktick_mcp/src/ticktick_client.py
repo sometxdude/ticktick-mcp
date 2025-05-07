@@ -26,11 +26,13 @@ class TickTickClient:
             raise ValueError("TICKTICK_ACCESS_TOKEN environment variable is not set. "
                             "Please run 'uv run -m ticktick_mcp.authenticate' to set up your credentials.")
             
-        self.base_url = "https://api.ticktick.com/open/v1"
-        self.token_url = "https://ticktick.com/oauth/token"
+        self.base_url = os.getenv("TICKTICK_BASE_URL") or "https://api.ticktick.com/open/v1"
+        self.token_url = os.getenv("TICKTICK_TOKEN_URL") or "https://ticktick.com/oauth/token"
         self.headers = {
             "Authorization": f"Bearer {self.access_token}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Accept-Encoding": None,
+            "User-Agent": 'curl/8.7.1'
         }
     
     def _refresh_access_token(self) -> bool:
