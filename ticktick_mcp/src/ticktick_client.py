@@ -172,7 +172,7 @@ class TickTickClient:
             response.raise_for_status()
             
             # Return empty dict for 204 No Content
-            if response.status_code == 204:
+            if response.status_code == 204 or response.text == "":
                 return {}
             
             return response.json()

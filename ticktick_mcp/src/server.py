@@ -57,7 +57,8 @@ def initialize_client():
 # Format a task object from TickTick for better display
 def format_task(task: Dict) -> str:
     """Format a task into a human-readable string."""
-    formatted = f"Title: {task.get('title', 'No title')}\n"
+    formatted = f"ID: {task.get('id', 'No ID')}\n"
+    formatted += f"Title: {task.get('title', 'No title')}\n"
     
     # Add project ID
     formatted += f"Project ID: {task.get('projectId', 'None')}\n"
