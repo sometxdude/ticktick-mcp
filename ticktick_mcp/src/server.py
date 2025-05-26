@@ -24,18 +24,12 @@ def initialize_client():
     global ticktick
     try:
         # Check if .env file exists with access token
-        from pathlib import Path
-        env_path = Path('.env')
-        if not env_path.exists():
-            logger.error("No .env file found. Please run 'uv run -m ticktick_mcp.cli auth' to set up authentication.")
-            return False
+        load_dotenv()
         
         # Check if we have valid credentials
-        with open(env_path, 'r') as f:
-            content = f.read()
-            if 'TICKTICK_ACCESS_TOKEN' not in content:
-                logger.error("No access token found in .env file. Please run 'uv run -m ticktick_mcp.cli auth' to authenticate.")
-                return False
+        if os.getenv("TICKTICK_ACCESS_TOKEN") is None:
+            logger.error("No access token found in .env file. Please run 'uv run -m ticktick_mcp.cli auth' to authenticate.")
+            return False
         
         # Initialize the client
         ticktick = TickTickClient()
