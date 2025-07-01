@@ -429,6 +429,49 @@ async def delete_project(project_id: str) -> str:
         logger.error(f"Error in delete_project: {e}")
         return f"Error deleting project: {str(e)}"
 
+@mcp.tool()
+async def create_subtask(
+    subtask_title: str,
+    parent_task_id: str,
+    project_id: str,
+    content: str = None,
+    priority: int = 0
+) -> str:
+    """
+    Create a subtask for a parent task within the same project.
+    
+    Args:
+        subtask_title: Title of the subtask
+        parent_task_id: ID of the parent task
+        project_id: ID of the project (must be same for both parent and subtask)
+        content: Optional content/description for the subtask
+        priority: Priority level (0: None, 1: Low, 3: Medium, 5: High) (optional)
+    """
+    if not ticktick:
+        if not initialize_client():
+            return "Failed to initialize TickTick client. Please check your API credentials."
+    
+    # Validate priority
+    if priority not in [0, 1, 3, 5]:
+        return "Invalid priority. Must be 0 (None), 1 (Low), 3 (Medium), or 5 (High)."
+    
+    try:
+        subtask = ticktick.create_subtask(
+            subtask_title=subtask_title,
+            parent_task_id=parent_task_id,
+            project_id=project_id,
+            content=content,
+            priority=priority
+        )
+        
+        if 'error' in subtask:
+            return f"Error creating subtask: {subtask['error']}"
+        
+        return f"Subtask created successfully:\n\n" + format_task(subtask)
+    except Exception as e:
+        logger.error(f"Error in create_subtask: {e}")
+        return f"Error creating subtask: {str(e)}"
+
 def main():
     """Main entry point for the MCP server."""
     # Initialize the TickTick client
