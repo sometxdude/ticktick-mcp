@@ -195,7 +195,8 @@ Here are some example prompts to use with Claude after connecting the TickTick M
 
 ### GTD Workflow
 
-Following David Allen's "Getting Things Done" framework, manage an 'engaged' (high priority + overdue) and a 'next' list (medium priority + due tomorrow)
+Following David Allen's "Getting Things Done" framework, manage an Engaged and Next actions.
+Engaged will retrieve tasks of high priority, due today or overdue. Next will retrieve medium priority or due tomorrow.
 
 - "Show me everything I need to focus on today"
 - "What's my workload looking like this week?"
