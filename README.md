@@ -199,11 +199,10 @@ Following David Allen's "Getting Things Done" framework, manage an Engaged and N
 
 - Engaged will retrieve tasks of high priority, due today or overdue.
 - Next will retrieve medium priority or due tomorrow.
+- Break down complex actions into smaller actions with batch_creation
 
 For example:
 
-- "Show me everything I need to focus on today"
-- "What's my workload looking like this week?"
 - "Time block the rest of my day from 2-8pm with items from my engaged list"
 - "Walk me through my next actions and help my identify what I should focus on tomorrow?" 
 - "Break down this project into 5 smaller actionable tasks"
