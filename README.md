@@ -146,9 +146,36 @@ Once connected, you'll see the TickTick MCP server tools available in Claude, in
 | `create_project` | Create a new project | `name`, `color` (optional), `view_mode` (optional) |
 | `delete_project` | Delete a project | `project_id` |
 
+## Task-specific MCP Tools
+
+### Task Retrieval & Search
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `get_all_tasks` | Get all tasks from all projects | None |
+| `get_tasks_by_priority` | Get tasks filtered by priority level | `priority_id` (0: None, 1: Low, 3: Medium, 5: High) |
+| `search_tasks` | Search tasks by title, content, or subtasks | `search_term` |
+
+### Date-Based Task Retrieval
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `get_tasks_due_today` | Get all tasks due today | None |
+| `get_tasks_due_tomorrow` | Get all tasks due tomorrow | None |
+| `get_tasks_due_in_days` | Get tasks due in exactly X days | `days` (0 = today, 1 = tomorrow, etc.) |
+| `get_tasks_due_this_week` | Get tasks due within the next 7 days | None |
+| `get_overdue_tasks` | Get all overdue tasks | None |
+
+### Getting Things Done (GTD) Framework
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `get_engaged_tasks` | Get "engaged" tasks (high priority or overdue) | None |
+| `get_next_tasks` | Get "next" tasks (medium priority or due tomorrow) | None |
+| `batch_create_tasks` | Create multiple tasks at once | `tasks` (list of task dictionaries) |
+
 ## Example Prompts for Claude
 
 Here are some example prompts to use with Claude after connecting the TickTick MCP server:
+
+### General
 
 - "Show me all my TickTick projects"
 - "Create a new task called 'Finish MCP server documentation' in my work project with high priority"
@@ -156,6 +183,25 @@ Here are some example prompts to use with Claude after connecting the TickTick M
 - "Mark the task 'Buy groceries' as complete"
 - "Create a new project called 'Vacation Planning' with a blue color"
 - "When is my next deadline in TickTick?"
+
+### Task Filtering Queries
+
+- "What tasks do I have due today?"
+- "Show me everything that's overdue"
+- "Show me all tasks due this week"
+- "Search for tasks about 'project alpha'"
+- "Show me all tasks with 'client' in the title or description"
+- "Show me all my high priority tasks"
+
+### GTD Workflow
+
+Following David Allen's "Getting Things Done" framework, manage an 'engaged' (high priority + overdue) and a 'next' list (medium priority + due tomorrow)
+
+- "Show me everything I need to focus on today"
+- "What's my workload looking like this week?"
+- "Time block the rest of my day from 2-8pm with items from my engaged list"
+- "Walk me through my next actions and help my identify what I should focus on tomorrow?" 
+- "Break down this project into 5 smaller actionable tasks"
 
 ## Development
 
