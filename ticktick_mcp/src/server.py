@@ -430,10 +430,84 @@ async def delete_project(project_id: str) -> str:
         return f"Error deleting project: {str(e)}"
     
 # Task Specific MCP Tools
+# Priority mapping for better readability
+PRIORITY_MAP = {0: "None", 1: "Low", 3: "Medium", 5: "High"}
+
+
+def _get_project_tasks_by_filter(projects: List[Dict], filter_func, filter_name: str) -> str:
+    """
+    Helper function to filter tasks across all projects.
+    
+    Args:
+        projects: List of project dictionaries
+        filter_func: Function that takes a task and returns True if it matches the filter
+        filter_name: Name of the filter for output formatting
+    
+    Returns:
+        Formatted string of filtered tasks
+    """
+    if not projects:
+        return "No projects found."
+    
+    result = f"Found {len(projects)} projects:\n\n"
+    
+    for i, project in enumerate(projects, 1):
+        if project.get('closed'):
+            continue
+            
+        project_id = project.get('id', 'No ID')
+        project_data = ticktick.get_project_with_data(project_id)
+        tasks = project_data.get('tasks', [])
+        
+        if not tasks:
+            result += f"Project {i}:\n{format_project(project)}"
+            result += f"With 0 tasks that are to be '{filter_name}' in this project :\n\n\n"
+            continue
+        
+        # Filter tasks using the provided function
+        filtered_tasks = [(t, task) for t, task in enumerate(tasks, 1) if filter_func(task)]
+        
+        result += f"Project {i}:\n{format_project(project)}"
+        result += f"With {len(filtered_tasks)} tasks that are to be '{filter_name}' in this project :\n"
+        
+        for t, task in filtered_tasks:
+            result += f"Task {t}:\n{format_task(task)}\n"
+        
+        result += "\n\n"
+    
+    return result
+
+
+def _is_task_overdue(task: Dict[str, Any]) -> bool:
+    """Check if a task is overdue."""
+    due_date = task.get('dueDate')
+    if not due_date:
+        return False
+    
+    try:
+        task_due = datetime.strptime(due_date, "%Y-%m-%dT%H:%M:%S.%f%z")
+        return task_due <= datetime.now(timezone.utc)
+    except (ValueError, TypeError):
+        return False
+
+
+def _is_task_due_tomorrow(task: Dict[str, Any]) -> bool:
+    """Check if a task is due tomorrow."""
+    due_date = task.get('dueDate')
+    if not due_date:
+        return False
+    
+    try:
+        task_due_date = datetime.strptime(due_date, "%Y-%m-%dT%H:%M:%S.%f%z").date()
+        tomorrow_date = (datetime.now(timezone.utc) + timedelta(days=1)).date()
+        return task_due_date == tomorrow_date
+    except (ValueError, TypeError):
+        return False
+
 
 @mcp.tool()
 async def get_all_tasks() -> str:
-    """Get all tasks from TickTick. Ignores closed projects"""
+    """Get all tasks from TickTick. Ignores closed projects."""
     if not ticktick:
         if not initialize_client():
             return "Failed to initialize TickTick client. Please check your API credentials."
@@ -443,90 +517,52 @@ async def get_all_tasks() -> str:
         if 'error' in projects:
             return f"Error fetching projects: {projects['error']}"
         
-        if not projects:
-            return "No projects found."
+        def all_tasks_filter(task: Dict[str, Any]) -> bool:
+            return True  # Include all tasks
         
-        result = f"Found {len(projects)} projects:\n\n"
-
-        for i, project in enumerate(projects, 1):
-            if not project.get('closed'):
-                project_id = project.get('id', 'No ID')
-                project_data = ticktick.get_project_with_data(project_id)
-                tasks = project_data.get('tasks', [])
-
-                if not tasks:
-                    result += f"No tasks found in project '{project_data.get('project', {}).get('name', project_id)}'\n."
-                else: 
-                    result += f"Project {i}:\n" + format_project(project)
-                    
-                    result += f"With {len(tasks)} tasks in project :\n"
-                    for t, task in enumerate(tasks, 1):
-                        result += f"Task {t}:\n" + format_task(task) + "\n"
-
-                    result += "\n\n"
+        return _get_project_tasks_by_filter(projects, all_tasks_filter, "included")
         
-        return result
     except Exception as e:
-        logger.error(f"Error in get_projects: {e}")
+        logger.error(f"Error in get_all_tasks: {e}")
         return f"Error retrieving projects: {str(e)}"
+
 
 @mcp.tool()
 async def get_tasks_by_priority(priority_id: int) -> str:
     """
-    Get all tasks from TickTick by priority.
-    Ignores closed projects
+    Get all tasks from TickTick by priority. Ignores closed projects.
 
     Args:
         priority_id: Priority of tasks to retrieve {0: "None", 1: "Low", 3: "Medium", 5: "High"}
-    
     """
     if not ticktick:
         if not initialize_client():
             return "Failed to initialize TickTick client. Please check your API credentials."
+    
+    if priority_id not in PRIORITY_MAP:
+        return f"Invalid priority_id. Valid values: {list(PRIORITY_MAP.keys())}"
     
     try:
         projects = ticktick.get_projects()
         if 'error' in projects:
             return f"Error fetching projects: {projects['error']}"
         
-        if not projects:
-            return "No projects found."
+        def priority_filter(task: Dict[str, Any]) -> bool:
+            return task.get('priority', 0) == priority_id
         
-        result = f"Found {len(projects)} projects:\n\n"
-
-        for i, project in enumerate(projects, 1):
-            if not project.get('closed'):
-                project_id = project.get('id', 'No ID')
-                project_data = ticktick.get_project_with_data(project_id)
-                tasks = project_data.get('tasks', [])
-
-                if not tasks:
-                    result += ""
-                else: 
-                    result += f"Project {i}:\n" + format_project(project)
-                    tasks_result = ""
-                    count = 0
-                    for t, task in enumerate(tasks, 1):
-                        priority = task.get('priority', 0)
-                        if priority == priority_id:
-                            tasks_result += f"Task {t}:\n" + format_task(task) + "\n"
-                            count += 1
-
-                    result += f"With {count} tasks of '{priority_id}' priority in project :\n"
-                    result += tasks_result
-
-                    result += "\n\n"
-
-        return result
+        priority_name = f"{PRIORITY_MAP[priority_id]} ({priority_id})"
+        return _get_project_tasks_by_filter(projects, priority_filter, f"priority '{priority_name}'")
+        
     except Exception as e:
-        logger.error(f"Error in get_projects: {e}")
+        logger.error(f"Error in get_tasks_by_priority: {e}")
         return f"Error retrieving projects: {str(e)}"
+
 
 @mcp.tool()
 async def get_engaged_tasks() -> str:
     """
-    Get all tasks from TickTick that are "Engaged"
-    This includes tasks marked as high priority or overdue
+    Get all tasks from TickTick that are "Engaged".
+    This includes tasks marked as high priority (5) or overdue.
     """
     if not ticktick:
         if not initialize_client():
@@ -537,48 +573,23 @@ async def get_engaged_tasks() -> str:
         if 'error' in projects:
             return f"Error fetching projects: {projects['error']}"
         
-        if not projects:
-            return "No projects found."
+        def engaged_filter(task: Dict[str, Any]) -> bool:
+            is_high_priority = task.get('priority', 0) == 5
+            is_overdue = _is_task_overdue(task)
+            return is_high_priority or is_overdue
         
-        result = f"Found {len(projects)} projects:\n\n"
-
-        for i, project in enumerate(projects, 1):
-            if not project.get('closed'):
-                project_id = project.get('id', 'No ID')
-                project_data = ticktick.get_project_with_data(project_id)
-                tasks = project_data.get('tasks', [])
-
-                if not tasks:
-                    result += ""
-                else: 
-                    result += f"Project {i}:\n" + format_project(project)
-                    tasks_result = ""
-                    count = 0
-                    for t, task in enumerate(tasks, 1):
-                        priority = task.get('priority', 0)
-                        overDue = False
-                        if task.get('dueDate'):
-                            if datetime.strptime(task.get('dueDate'), "%Y-%m-%dT%H:%M:%S.%f%z") <= datetime.now(timezone.utc):
-                                overDue = True
-                        if priority == 5 or overDue:
-                            tasks_result += f"Task {t}:\n" + format_task(task) + "\n"
-                            count += 1
-
-                    result += f"With {count} tasks that are to be 'engaged' in this project :\n"
-                    result += tasks_result
-
-                    result += "\n\n"
-
-        return result
+        return _get_project_tasks_by_filter(projects, engaged_filter, "engaged")
+        
     except Exception as e:
-        logger.error(f"Error in get_projects: {e}")
+        logger.error(f"Error in get_engaged_tasks: {e}")
         return f"Error retrieving projects: {str(e)}"
+
 
 @mcp.tool()
 async def get_next_tasks() -> str:
     """
-    Get all tasks from TickTick that are "Next"
-    This includes tasks marked as medium priority or due tomorrow
+    Get all tasks from TickTick that are "Next".
+    This includes tasks marked as medium priority (3) or due tomorrow.
     """
     if not ticktick:
         if not initialize_client():
@@ -589,43 +600,15 @@ async def get_next_tasks() -> str:
         if 'error' in projects:
             return f"Error fetching projects: {projects['error']}"
         
-        if not projects:
-            return "No projects found."
+        def next_filter(task: Dict[str, Any]) -> bool:
+            is_medium_priority = task.get('priority', 0) == 3
+            is_due_tomorrow = _is_task_due_tomorrow(task)
+            return is_medium_priority or is_due_tomorrow
         
-        result = f"Found {len(projects)} projects:\n\n"
-
-        for i, project in enumerate(projects, 1):
-            if not project.get('closed'):
-                project_id = project.get('id', 'No ID')
-                project_data = ticktick.get_project_with_data(project_id)
-                tasks = project_data.get('tasks', [])
-
-                if not tasks:
-                    result += ""
-                else: 
-                    result += f"Project {i}:\n" + format_project(project)
-                    tasks_result = ""
-                    count = 0
-                    for t, task in enumerate(tasks, 1):
-                        priority = task.get('priority', 0)
-                        tomorrow = False
-                        if task.get('dueDate'):
-                            due_date = datetime.strptime(task.get('dueDate'), "%Y-%m-%dT%H:%M:%S.%f%z").date()
-                            tomorrow_date = (datetime.now(timezone.utc) + timedelta(days=1)).date()
-                            if due_date == tomorrow_date:
-                                tomorrow = True
-                        if priority == 3 or tomorrow:
-                            tasks_result += f"Task {t}:\n" + format_task(task) + "\n"
-                            count += 1
-
-                    result += f"With {count} tasks that are to be 'engaged' in this project :\n"
-                    result += tasks_result
-
-                    result += "\n\n"
-
-        return result
+        return _get_project_tasks_by_filter(projects, next_filter, "next")
+        
     except Exception as e:
-        logger.error(f"Error in get_projects: {e}")
+        logger.error(f"Error in get_next_tasks: {e}")
         return f"Error retrieving projects: {str(e)}"
 
 def main():
