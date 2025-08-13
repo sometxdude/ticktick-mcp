@@ -133,8 +133,8 @@ class TickTickAuth:
     """TickTick OAuth authentication manager."""
     
     def __init__(self, client_id: str = None, client_secret: str = None, 
-                 redirect_uri: str = "http://localhost:8000/callback",
-                 port: int = 8000, env_file: str = None):
+                 redirect_uri: str = "http://localhost:8002",
+                 port: int = 8002, env_file: str = None):
         """
         Initialize the TickTick authentication manager.
         
